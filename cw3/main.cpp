@@ -284,7 +284,7 @@ int main(int argc, char **argv) try
 	lut::ShaderModule bloom_hFrag = lut::load_shader_module(window, cfg::kBloomHFragShaderPath);
 
 	// create scene ubo
-	VkUBO<glsl::SceneUniform> sceneUBO(window, allocator, dpool, VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT|VK_SHADER_STAGE_GEOMETRY_BIT, 0);
+	VkUBO<glsl::SceneUniform> sceneUBO(window, allocator, dpool, VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	sceneUBO.data = std::make_unique<glsl::SceneUniform>();
 	
 	// create light ubo
@@ -615,7 +615,7 @@ int main(int argc, char **argv) try
 					BindingMatSet(screenPipe2, cmdBuffer, gaussSSBO.set, 2);
 					constants.bind(cmdBuffer, screenPipe2.layout.handle, &aConstants);
 				}
-				// draw screen quad
+				
 				vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, queryPool.handle, 2);
 				// draw screen quad
 				vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
