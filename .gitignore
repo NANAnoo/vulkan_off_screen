@@ -4,5 +4,6 @@
 .cache/
 assets/
 bin/
+lib/
 
 compile_commands.json
