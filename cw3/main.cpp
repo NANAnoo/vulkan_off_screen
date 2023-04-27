@@ -212,6 +212,10 @@ int main(int argc, char **argv) try
 				modeChanged = (sCurrentMode != cfg::Bloom);
 				sCurrentMode = cfg::Bloom;
 			}
+		} else if (aAction == GLFW_PRESS) {
+			sController.onKeyPress(aKey);
+		} 
+		if (aAction == GLFW_REPEAT || aAction == GLFW_PRESS) {
 			if (aKey == GLFW_KEY_UP) {
 				// normal mode
 				sLightPosition += glm::vec3(0, 0.1, 0);
@@ -222,8 +226,6 @@ int main(int argc, char **argv) try
 			} else if (aKey == GLFW_KEY_RIGHT) {
 				sLightIntensity *= 2.f;
 			}
-		} else if (aAction == GLFW_PRESS) {
-			sController.onKeyPress(aKey);
 		}
 	});
 
