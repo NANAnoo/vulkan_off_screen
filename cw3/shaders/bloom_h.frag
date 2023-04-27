@@ -31,7 +31,7 @@ void main()
     // screen color + bloom color * weight[0]
     vec3 color = vec3(0.0);
     for (int i = 0; i < uConstants.filter_width; i ++) {
-        vec2 offset = vec2(getData(i + uConstants.filter_width), 1.f) * pixel_size;
+        vec2 offset = vec2(getData(i + uConstants.filter_width), 0.f) * pixel_size;
         float weight = getData(i);
         vec2 tc = center_tc + offset;
         vec3 sample_color = texture(middleTexture, tc).rgb;

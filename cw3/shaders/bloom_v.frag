@@ -29,7 +29,7 @@ void main()
     // convolution
     vec3 color = vec3(0);
     for (int i = 0; i < uConstants.filter_width; i ++) {
-        vec2 offset = vec2(1.f, getData(i + uConstants.filter_width)) * pixel_size;
+        vec2 offset = vec2(0.f, getData(i + uConstants.filter_width)) * pixel_size;
         float weight = getData(i);
         vec2 tc = center_tc + offset;
         vec3 sample_color = texture(screenTexture, tc).rgb;
