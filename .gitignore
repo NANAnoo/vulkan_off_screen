@@ -1,0 +1,8 @@
+.vs/
+.vscode/
+*build*/
+.cache/
+assets/
+bin/
+
+compile_commands.json
