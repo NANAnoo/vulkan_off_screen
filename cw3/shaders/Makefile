@@ -30,9 +30,13 @@ endef
 
 CUSTOM :=
 
+CUSTOM += ../../assets/cw3/shaders/bloom_h.frag.spv
+CUSTOM += ../../assets/cw3/shaders/bloom_v.frag.spv
 CUSTOM += ../../assets/cw3/shaders/default.frag.spv
 CUSTOM += ../../assets/cw3/shaders/default.vert.spv
 CUSTOM += ../../assets/cw3/shaders/fullscreen.vert.spv
+CUSTOM += ../../assets/cw3/shaders/screen.frag.spv
+CUSTOM += ../../assets/cw3/shaders/tone.frag.spv
 
 # Rules
 # #############################################
@@ -60,6 +64,14 @@ clean:
 # File Rules
 # #############################################
 
+../../assets/cw3/shaders/bloom_h.frag.spv: bloom_h.frag
+	@echo "GLSLC: [FRAG] 'bloom_h.frag'"
+	$(SILENT) mkdir -p "../../assets/cw3/shaders"
+	$(SILENT) "../../third_party/shaderc/linux-x86_64/glslc" -O  -o "../../assets/cw3/shaders/bloom_h.frag.spv" "bloom_h.frag"
+../../assets/cw3/shaders/bloom_v.frag.spv: bloom_v.frag
+	@echo "GLSLC: [FRAG] 'bloom_v.frag'"
+	$(SILENT) mkdir -p "../../assets/cw3/shaders"
+	$(SILENT) "../../third_party/shaderc/linux-x86_64/glslc" -O  -o "../../assets/cw3/shaders/bloom_v.frag.spv" "bloom_v.frag"
 ../../assets/cw3/shaders/default.frag.spv: default.frag
 	@echo "GLSLC: [FRAG] 'default.frag'"
 	$(SILENT) mkdir -p "../../assets/cw3/shaders"
@@ -72,3 +84,11 @@ clean:
 	@echo "GLSLC: [VERT] 'fullscreen.vert'"
 	$(SILENT) mkdir -p "../../assets/cw3/shaders"
 	$(SILENT) "../../third_party/shaderc/linux-x86_64/glslc" -O  -o "../../assets/cw3/shaders/fullscreen.vert.spv" "fullscreen.vert"
+../../assets/cw3/shaders/screen.frag.spv: screen.frag
+	@echo "GLSLC: [FRAG] 'screen.frag'"
+	$(SILENT) mkdir -p "../../assets/cw3/shaders"
+	$(SILENT) "../../third_party/shaderc/linux-x86_64/glslc" -O  -o "../../assets/cw3/shaders/screen.frag.spv" "screen.frag"
+../../assets/cw3/shaders/tone.frag.spv: tone.frag
+	@echo "GLSLC: [FRAG] 'tone.frag'"
+	$(SILENT) mkdir -p "../../assets/cw3/shaders"
+	$(SILENT) "../../third_party/shaderc/linux-x86_64/glslc" -O  -o "../../assets/cw3/shaders/tone.frag.spv" "tone.frag"
