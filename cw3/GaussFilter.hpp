@@ -2,9 +2,9 @@
 
 namespace {
     template <unsigned int w>
-    struct GaussFilter1D {
+    struct GaussCompressedFilter1D {
     public:
-        GaussFilter1D(float sigma)
+        GaussCompressedFilter1D(float sigma)
         {
             auto gaussFunc = [sigma](float x) {
                 const float mPI = 3.14159265358979323846f;
@@ -48,7 +48,7 @@ namespace {
                 }
             }
         }
-        ~GaussFilter1D() = default;
+        ~GaussCompressedFilter1D() = default;
 
         constexpr static unsigned int getFilterSize() {
             return ( (w + 1u) / 2u );
@@ -57,6 +57,40 @@ namespace {
         constexpr static unsigned int getArraySize() {
             return getFilterSize() * 2u;
         }
+
+    private:
+        // ADD PADDING
+        float data[getArraySize() + (4 - getArraySize() % 4) % 4];
+    };
+
+    template<unsigned int w>
+    struct GaussFilter1D {
+    public:
+        GaussFilter1D(float sigma)
+        {
+            auto gaussFunc = [sigma](float x) {
+                const float mPI = 3.14159265358979323846f;
+                return (1.f / (sqrt(2.f * mPI) * sigma)) * exp(- (x * x) / (2.f * sigma * sigma));
+            };
+
+            // Calculate the weights at size of w
+            const bool isEven = (w % 2 == 0);
+            
+            for (unsigned int i = 0; i < w; i ++) {
+                // odd sequence : x [0, 1, 2 ...], gauss(x) = [, , ,]
+                // even sequence: x [0.5, 1.5, 2.5 ...], gauss(x) = [, , ,]
+                float x = float(i) + int(isEven) * 0.5f;
+                data[i] = gaussFunc(x);
+                data[i + w] = x;
+            }
+            if (!isEven) {
+                data[0] = data[0] / 2;
+            }
+        }
+        constexpr static unsigned int getArraySize() {
+            return w * 2;
+        }
+        ~GaussFilter1D() = default;
 
     private:
         // ADD PADDING

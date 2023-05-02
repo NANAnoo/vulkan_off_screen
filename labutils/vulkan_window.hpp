@@ -42,6 +42,7 @@ namespace labutils
 
 			VkFormat swapchainFormat;
 			VkExtent2D swapchainExtent;
+			float timestampPeriod = 0.f;
 	};
 
 	enum class DeviceLevel

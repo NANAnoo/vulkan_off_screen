@@ -5,5 +5,5 @@
 assets/
 bin/
 lib/
-
+report/
 compile_commands.json

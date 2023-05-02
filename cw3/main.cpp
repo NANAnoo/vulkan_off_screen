@@ -295,11 +295,16 @@ int main(int argc, char **argv) try
 
 	// create gauss filter ubo
 	const int kGaussFilterSize = 22; // 44 / 2, WHICH IS THE TAP SIZE
-	VkSSBO<GaussFilter1D<kGaussFilterSize>> gaussSSBO(window, allocator, dpool, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
-	gaussSSBO.data = std::make_unique<GaussFilter1D<kGaussFilterSize>>(9.f);
+
+	// with compress
+	//using GaussFilter = GaussCompressedFilter1D<kGaussFilterSize>;
+	// without compress
+	 using GaussFilter = GaussFilter1D<kGaussFilterSize>;
+	VkSSBO<GaussFilter> gaussSSBO(window, allocator, dpool, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
+	gaussSSBO.data = std::make_unique<GaussFilter>(9.f);
 
 	VkConstant<glsl::Constants> constants(0, VK_SHADER_STAGE_FRAGMENT_BIT);
-	glsl::Constants aConstants{GaussFilter1D<kGaussFilterSize>::getArraySize() / 2};
+	glsl::Constants aConstants{GaussFilter::getArraySize() / 2};
 
 	// pipe generator, set up basic informations
 	PipeLineGenerator basicPipeGen;
@@ -371,6 +376,10 @@ int main(int argc, char **argv) try
 			}
 		);
 	}
+	
+	// stats data
+	const double print_duration = 5.0; // print per 5 seconds
+	double mean_fps = 0, mean_cost_1 = 0, mean_cost_2 = 0, record_count = 0, record_duration = 0;
 
 	// Application main loop
 	bool recreateSwapchain = false;
@@ -593,21 +602,22 @@ int main(int argc, char **argv) try
 				vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
 				// bind screen pipe
 				vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenPipe.pipe.handle);
+				vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, queryPool.handle, 0);
 				// bind offscreen texture 
 				BindingMatSet(screenPipe, cmdBuffer, offScreenAttachments[0].attachments_set, 0);
 				if (sCurrentMode == cfg::Bloom) {
 					BindingMatSet(screenPipe, cmdBuffer, gaussSSBO.set, 1);
 					constants.bind(cmdBuffer, screenPipe.layout.handle, &aConstants);
 				}
-				
-				vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, queryPool.handle, 0);
 				// draw screen quad
 				vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
 				vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, queryPool.handle, 1);
+
 				// next subpass 2
 				vkCmdNextSubpass(cmdBuffer, VK_SUBPASS_CONTENTS_INLINE);
 				// bind screen pipe
 				vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, screenPipe2.pipe.handle);
+				vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, queryPool.handle, 2);
 				// bind offscreen texture 
 				BindingMatSet(screenPipe2, cmdBuffer, offScreenAttachments[1].attachments_set, 0);
 				if (sCurrentMode == cfg::Bloom) {
@@ -615,8 +625,6 @@ int main(int argc, char **argv) try
 					BindingMatSet(screenPipe2, cmdBuffer, gaussSSBO.set, 2);
 					constants.bind(cmdBuffer, screenPipe2.layout.handle, &aConstants);
 				}
-				
-				vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, queryPool.handle, 2);
 				// draw screen quad
 				vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
 				vkCmdWriteTimestamp(cmdBuffer, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, queryPool.handle, 3);
@@ -632,12 +640,32 @@ int main(int argc, char **argv) try
 
 		// present rendered images.
 		present_results(window.presentQueue, window.swapchain, imageIndex, renderFinished.handle, recreateSwapchain);
-		std::printf("----------------------------------------\n");
-		std::printf("FPS: %.3f \n", 1.f / duration);
+		
 		uint64_t times[4];
-		vkGetQueryPoolResults(window.device, queryPool.handle, 0, 4, 4 * sizeof(uint64_t), times, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT);
-		std::printf("Subpass 1 cost: %f ms\n", (times[1] - times[0]) * 1e-6);
-		std::printf("Subpass 2 cost: %f ms\n", (times[3] - times[2]) * 1e-6);
+		vkGetQueryPoolResults(window.device, queryPool.handle, 0, 4, 4 * sizeof(uint64_t), times, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+		
+		double new_fps = 1.f / duration;
+		mean_fps = (mean_fps * record_count + new_fps) / (record_count + 1);
+
+		double new_cost_1 = double(times[1] - times[0]) * 1e-6;// * double(window.timestampPeriod);
+		double new_cost_2 = double(times[3] - times[2]) * 1e-6;// * double(window.timestampPeriod);
+
+		mean_cost_1 = (mean_cost_1 * record_count + new_cost_1) / (record_count + 1);
+		mean_cost_2 = (mean_cost_2 * record_count + new_cost_2) / (record_count + 1);
+		record_duration += duration;
+		record_count += 1;
+		if (record_duration > print_duration) {
+			std::printf("------------ mean values in %f s-------------------\n", print_duration);
+			std::printf("FPS: %.3f \n", mean_fps);
+			std::printf("Subpass 1 cost: %3f ms\n", mean_cost_1);
+			std::printf("Subpass 2 cost: %3f ms\n", mean_cost_2);
+			record_duration = 0;
+			record_count = 0;
+			mean_cost_1 = 0;
+			mean_cost_2 = 0;
+			mean_fps = 0;
+		}
+		
 	}
 	
 	// Cleanup takes place automatically in the destructors, but we sill need

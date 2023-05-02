@@ -95,6 +95,7 @@ namespace labutils
 		, currentDeviceFeatures(std::move(aOther.currentDeviceFeatures))
 		, swapchainFormat( aOther.swapchainFormat )
 		, swapchainExtent( aOther.swapchainExtent )
+		, timestampPeriod( aOther.timestampPeriod)
 	{}
 
 	VulkanWindow& VulkanWindow::operator=( VulkanWindow&& aOther ) noexcept
@@ -213,6 +214,8 @@ namespace labutils
 			VkPhysicalDeviceProperties props;
 			vkGetPhysicalDeviceProperties( ret.physicalDevice, &props );
 			std::fprintf( stderr, "Selected device: %s (%d.%d.%d)\n", props.deviceName, VK_API_VERSION_MAJOR(props.apiVersion), VK_API_VERSION_MINOR(props.apiVersion), VK_API_VERSION_PATCH(props.apiVersion) );
+			// get 
+			ret.timestampPeriod = props.limits.timestampPeriod;
 		}
 
 		// Create a logical device
